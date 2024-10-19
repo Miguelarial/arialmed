@@ -131,7 +131,7 @@ const AppointmentForm = ({ type, userId, patientId, appointment, setOpen }: {
                             fieldType={FormFieldType.SELECT}
                             name="primaryPhysician"
                             label="Doctor"
-                            placeholder="Select a doctoor"
+                            placeholder="Select a doctor"
                         >
                             {Doctors.map((doctor) => (
                                 <SelectItem key={doctor.name} value={doctor.name}>
