@@ -15,6 +15,7 @@ import Image from "next/image"
 import { Doctors } from "@/constants"
 import { createAppointment, updateAppointment } from "@/lib/actions/appointment.actions"
 import { Appointment } from "@/types/appwrite.types"
+import emailjs from "@emailjs/browser"
 
 const AppointmentForm = ({ type, userId, patientId, appointment, setOpen }: {
     type: "create" | "cancel" | "schedule",
@@ -38,7 +39,24 @@ const AppointmentForm = ({ type, userId, patientId, appointment, setOpen }: {
             note: appointment ? appointment.note : "",
             cancellationReason: appointment?.cancellationReason || "",
         },
-    })
+    });
+
+    const sendEmailNotification = async (content:string) => {
+        await emailjs
+            .send(
+                process.env.NEXT_PUBLIC_SERVICEID! || "",
+                process.env.NEXT_PUBLIC_TEMPLATEID! || "",
+                {
+                    from_name: "Arialmed",
+                    from_email: "mikearial@icloud.com",
+                    to_name: "Mike",
+                    to_email: "mikearial@icloud.com",
+                    message: content,
+                },
+                process.env.NEXT_PUBLIC_APIKEY
+            )
+    }
+
 
     async function onSubmit(values: z.infer<typeof AppointmentFormValidation>) {
         setIsLoading(true)
@@ -83,17 +101,20 @@ const AppointmentForm = ({ type, userId, patientId, appointment, setOpen }: {
                         status: status as Status,
                         cancellationReason: values?.cancellationReason,
                     },
-                    type
-                }
+                    type,
+                };
 
                 const updatedAppointment = await updateAppointment(appointmentToUpdate)
 
                 if (updatedAppointment) {
+                    const message = `Greetings from Arialmed. ${type === "schedule" ? `Your appointment has been confirmed from one of our doctors. Please come in at your scheduled time.` : `We regret to inform you that your appointment has been cancelled. Reason: ${values.cancellationReason}. If you have any questions, please don't hesitate to contact us.`}`;
+                    await sendEmailNotification(message);
+
                     setOpen && setOpen(false);
                     form.reset();
                 }
             }
-
+            
         } catch (error) {
             console.log(error);
         }
